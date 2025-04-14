@@ -1,10 +1,9 @@
-
-import RedCircle from "@/components/RedCircle";
+import RedSquare from "@/components/RedSquare";
 
 const Index = () => {
   return (
     <div className="w-full h-screen bg-black overflow-hidden">
-      <RedCircle />
+      <RedSquare />
     </div>
   );
 };
