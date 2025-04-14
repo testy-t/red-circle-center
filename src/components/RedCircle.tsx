@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 const RedCircle = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const circleRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 10, y: 10 });
+  const [position, setPosition] = useState({ x: 50, y: 50 });
   const [direction, setDirection] = useState({ x: 1, y: 1 });
   const [color, setColor] = useState("bg-red-500");
 
@@ -24,6 +24,14 @@ const RedCircle = () => {
   };
 
   useEffect(() => {
+    // Начальные размеры контейнера
+    if (containerRef.current) {
+      const initialWidth = window.innerWidth;
+      const initialHeight = window.innerHeight;
+      containerRef.current.style.width = `${initialWidth}px`;
+      containerRef.current.style.height = `${initialHeight}px`;
+    }
+
     const moveCircle = () => {
       if (!containerRef.current || !circleRef.current) return;
 
@@ -39,14 +47,24 @@ const RedCircle = () => {
       let colorChanged = false;
 
       // Проверка столкновения с горизонтальными границами
-      if (newX + circleWidth > containerWidth || newX < 0) {
-        newDirectionX = -direction.x;
+      if (newX + circleWidth > containerWidth) {
+        newX = containerWidth - circleWidth;
+        newDirectionX = -1;
+        colorChanged = true;
+      } else if (newX < 0) {
+        newX = 0;
+        newDirectionX = 1;
         colorChanged = true;
       }
 
       // Проверка столкновения с вертикальными границами
-      if (newY + circleHeight > containerHeight || newY < 0) {
-        newDirectionY = -direction.y;
+      if (newY + circleHeight > containerHeight) {
+        newY = containerHeight - circleHeight;
+        newDirectionY = -1;
+        colorChanged = true;
+      } else if (newY < 0) {
+        newY = 0;
+        newDirectionY = 1;
         colorChanged = true;
       }
 
@@ -58,23 +76,41 @@ const RedCircle = () => {
       setDirection({ x: newDirectionX, y: newDirectionY });
     };
 
+    const handleResize = () => {
+      if (containerRef.current) {
+        containerRef.current.style.width = `${window.innerWidth}px`;
+        containerRef.current.style.height = `${window.innerHeight}px`;
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
     const animationId = setInterval(moveCircle, 30);
-    return () => clearInterval(animationId);
+    
+    return () => {
+      clearInterval(animationId);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [position, direction, color]);
 
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full relative overflow-hidden"
+      className="fixed top-0 left-0 w-screen h-screen overflow-hidden"
+      style={{
+        width: '100vw',
+        height: '100vh'
+      }}
     >
       <div
         ref={circleRef}
-        className={`w-16 h-16 ${color} rounded-full shadow-lg absolute transition-colors duration-300`}
+        className={`w-16 h-16 ${color} rounded-full shadow-lg absolute transition-colors duration-300 flex items-center justify-center`}
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
         }}
-      />
+      >
+        <span className="text-white font-bold text-xs">DVD</span>
+      </div>
     </div>
   );
 };
