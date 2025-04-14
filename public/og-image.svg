@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <rect width="1200" height="630" fill="#000"/>
-  <circle cx="600" cy="315" r="200" fill="#ff0066"/>
+  <rect x="300" y="15" width="600" height="600" fill="#ff0066"/>
   <text x="600" y="335" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#fff" text-anchor="middle">DVD</text>
 </svg>
