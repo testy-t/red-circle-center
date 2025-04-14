@@ -7,6 +7,11 @@ const RedCircle = () => {
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [direction, setDirection] = useState({ x: 1, y: 1 });
   const [color, setColor] = useState("bg-red-500");
+  
+  // Сохраняем последнее время для расчета анимации
+  const lastTimeRef = useRef<number>(0);
+  // Скорость движения (пикселей в секунду)
+  const speedRef = useRef({ x: 150, y: 150 });
 
   const colors = [
     "bg-red-500",
@@ -24,29 +29,38 @@ const RedCircle = () => {
   };
 
   useEffect(() => {
+    if (!containerRef.current) return;
+    
     // Начальные размеры контейнера
-    if (containerRef.current) {
-      const initialWidth = window.innerWidth;
-      const initialHeight = window.innerHeight;
-      containerRef.current.style.width = `${initialWidth}px`;
-      containerRef.current.style.height = `${initialHeight}px`;
-    }
+    containerRef.current.style.width = `${window.innerWidth}px`;
+    containerRef.current.style.height = `${window.innerHeight}px`;
+    
+    let animationFrameId: number;
+    
+    const moveCircle = (timestamp: number) => {
+      if (!containerRef.current || !circleRef.current) {
+        animationFrameId = requestAnimationFrame(moveCircle);
+        return;
+      }
 
-    const moveCircle = () => {
-      if (!containerRef.current || !circleRef.current) return;
+      // Вычисляем delta time для плавного движения независимо от частоты кадров
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp;
+      const deltaTime = (timestamp - lastTimeRef.current) / 1000; // в секундах
+      lastTimeRef.current = timestamp;
 
       const containerWidth = containerRef.current.clientWidth;
       const containerHeight = containerRef.current.clientHeight;
       const circleWidth = circleRef.current.clientWidth;
       const circleHeight = circleRef.current.clientHeight;
 
-      let newX = position.x + direction.x * 5;
-      let newY = position.y + direction.y * 5;
+      // Рассчитываем движение на основе deltaTime для стабильной скорости
+      let newX = position.x + direction.x * speedRef.current.x * deltaTime;
+      let newY = position.y + direction.y * speedRef.current.y * deltaTime;
       let newDirectionX = direction.x;
       let newDirectionY = direction.y;
       let colorChanged = false;
 
-      // Проверка столкновения с горизонтальными границами
+      // Проверка столкновения с границами
       if (newX + circleWidth > containerWidth) {
         newX = containerWidth - circleWidth;
         newDirectionX = -1;
@@ -57,7 +71,6 @@ const RedCircle = () => {
         colorChanged = true;
       }
 
-      // Проверка столкновения с вертикальными границами
       if (newY + circleHeight > containerHeight) {
         newY = containerHeight - circleHeight;
         newDirectionY = -1;
@@ -74,6 +87,8 @@ const RedCircle = () => {
 
       setPosition({ x: newX, y: newY });
       setDirection({ x: newDirectionX, y: newDirectionY });
+      
+      animationFrameId = requestAnimationFrame(moveCircle);
     };
 
     const handleResize = () => {
@@ -84,10 +99,10 @@ const RedCircle = () => {
     };
 
     window.addEventListener('resize', handleResize);
-    const animationId = setInterval(moveCircle, 30);
+    animationFrameId = requestAnimationFrame(moveCircle);
     
     return () => {
-      clearInterval(animationId);
+      cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
     };
   }, [position, direction, color]);
@@ -103,13 +118,14 @@ const RedCircle = () => {
     >
       <div
         ref={circleRef}
-        className={`w-16 h-16 ${color} rounded-full shadow-lg absolute transition-colors duration-300 flex items-center justify-center`}
+        className={`w-16 h-16 ${color} rounded-full shadow-lg absolute will-change-transform`}
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
+          transform: 'translateZ(0)', // Включаем аппаратное ускорение
         }}
       >
-        <span className="text-white font-bold text-xs">DVD</span>
+        <span className="text-white font-bold text-xs absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">DVD</span>
       </div>
     </div>
   );
